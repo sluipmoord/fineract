@@ -36,6 +36,7 @@ import org.apache.fineract.portfolio.floatingrates.domain.FloatingRate;
 import org.apache.fineract.portfolio.fund.domain.Fund;
 import org.apache.fineract.portfolio.loanaccount.loanschedule.domain.AprCalculator;
 import org.apache.fineract.portfolio.loanproduct.LoanProductConstants;
+import org.apache.fineract.portfolio.rate.domain.Rate;
 import org.joda.time.LocalDate;
 
 import javax.persistence.*;
@@ -77,6 +78,10 @@ public class LoanProduct extends AbstractPersistableCustom<Long> {
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "m_product_loan_charge", joinColumns = @JoinColumn(name = "product_loan_id"), inverseJoinColumns = @JoinColumn(name = "charge_id"))
     private List<Charge> charges;
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(name = "m_product_loan_rate", joinColumns = @JoinColumn(name = "product_loan_id"), inverseJoinColumns = @JoinColumn(name = "rate_id"))
+    private List<Rate> rates;
 
     @Embedded
     private LoanProductRelatedDetail loanProductRelatedDetail;
@@ -163,7 +168,8 @@ public class LoanProduct extends AbstractPersistableCustom<Long> {
     private boolean isEqualAmortization = false;
 
     public static LoanProduct assembleFromJson(final Fund fund, final LoanTransactionProcessingStrategy loanTransactionProcessingStrategy,
-            final List<Charge> productCharges, final JsonCommand command, final AprCalculator aprCalculator, FloatingRate floatingRate) {
+            final List<Charge> productCharges, final JsonCommand command, final AprCalculator aprCalculator, FloatingRate floatingRate,
+            final List<Rate> productRates) {
 
         final String name = command.stringValueOfParameterNamed("name");
         final String shortName = command.stringValueOfParameterNamed(LoanProductConstants.shortName);
@@ -329,7 +335,7 @@ public class LoanProduct extends AbstractPersistableCustom<Long> {
                 installmentAmountInMultiplesOf, loanConfigurableAttributes, isLinkedToFloatingInterestRates, floatingRate,
                 interestRateDifferential, minDifferentialLendingRate, maxDifferentialLendingRate, defaultDifferentialLendingRate,
                 isFloatingInterestRateCalculationAllowed, isVariableInstallmentsAllowed, minimumGapBetweenInstallments,
-                maximumGapBetweenInstallments, syncExpectedWithDisbursementDate, canUseForTopup, isEqualAmortization);
+                maximumGapBetweenInstallments, syncExpectedWithDisbursementDate, canUseForTopup, isEqualAmortization, productRates);
 
     }
 
@@ -559,7 +565,7 @@ public class LoanProduct extends AbstractPersistableCustom<Long> {
             BigDecimal minDifferentialLendingRate, BigDecimal maxDifferentialLendingRate, BigDecimal defaultDifferentialLendingRate,
             Boolean isFloatingInterestRateCalculationAllowed, final Boolean isVariableInstallmentsAllowed,
             final Integer minimumGapBetweenInstallments, final Integer maximumGapBetweenInstallments,
-            final boolean syncExpectedWithDisbursementDate, final boolean canUseForTopup, final boolean isEqualAmortization) {
+            final boolean syncExpectedWithDisbursementDate, final boolean canUseForTopup, final boolean isEqualAmortization, final List<Rate> rates) {
         this.fund = fund;
         this.transactionProcessingStrategy = transactionProcessingStrategy;
         this.name = name.trim();
@@ -637,6 +643,10 @@ public class LoanProduct extends AbstractPersistableCustom<Long> {
                 syncExpectedWithDisbursementDate;
         this.canUseForTopup = canUseForTopup;
         this.isEqualAmortization = isEqualAmortization;
+
+        if(rates != null){
+            this.rates = rates;
+        }
     }
 
     public MonetaryCurrency getCurrency() {
@@ -674,6 +684,25 @@ public class LoanProduct extends AbstractPersistableCustom<Long> {
         } else {
             updated = true;
             this.charges = newProductCharges;
+        }
+        return updated;
+    }
+
+    public boolean updateRates(final List<Rate> newProductRates) {
+        if (newProductRates == null) { return false; }
+
+        boolean updated = false;
+        if (this.rates != null) {
+            final Set<Rate> currentSetOfCharges = new HashSet<>(this.rates);
+            final Set<Rate> newSetOfCharges = new HashSet<>(newProductRates);
+
+            if (!currentSetOfCharges.equals(newSetOfCharges)) {
+                updated = true;
+                this.rates = newProductRates;
+            }
+        } else {
+            updated = true;
+            this.rates = newProductRates;
         }
         return updated;
     }
@@ -1022,6 +1051,13 @@ public class LoanProduct extends AbstractPersistableCustom<Long> {
             this.canUseForTopup = newValue;
         }
 
+        if (command.hasParameter(LoanProductConstants.ratesParamName)) {
+            final JsonArray jsonArray = command.arrayOfParameterNamed(LoanProductConstants.ratesParamName);
+            if (jsonArray != null) {
+                actualChanges.put(LoanProductConstants.ratesParamName, command.jsonFragment(LoanProductConstants.ratesParamName));
+            }
+        }
+
         return actualChanges;
     }
 
@@ -1356,6 +1392,15 @@ public class LoanProduct extends AbstractPersistableCustom<Long> {
 
     public void setEqualAmortization(boolean isEqualAmortization) {
         this.isEqualAmortization = isEqualAmortization;
+    }
+
+
+    public List<Rate> getRates() {
+        return rates;
+    }
+
+    public void setRates(List<Rate> rates) {
+        this.rates = rates;
     }
 
 }
