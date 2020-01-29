@@ -595,6 +595,7 @@ public class CommandWrapperBuilder {
         this.entityName = "CLIENT";
         this.entityId = clientId;
         this.clientId = clientId;
+        this.clientId = clientId;
         this.href = "/clientId/" + clientId + "?command=rejectTransfer";
         return this;
     }

@@ -30,7 +30,8 @@ dependencies {
             'com.google.code.gson:gson',
             'org.quartz-scheduler:quartz',
             'joda-time:joda-time',
-            'org.apache.openjpa:openjpa-all',
+//            'org.apache.openjpa:openjpa-all',
+            'org.apache.openjpa:openjpa-all:3.1.0',
             'org.springframework:spring-jms',
             'org.mnode.ical4j:ical4j',
             'com.google.guava:guava',
@@ -41,7 +42,10 @@ dependencies {
     )
 
     implementation(
-            'ch.vorburger.mariaDB4j:mariaDB4j',
+//            'ch.vorburger.mariaDB4j:mariaDB4j',
+
+            'ch.vorburger.mariaDB4j:mariaDB4j:2.4.0',
+//            'org.apache.openjpa:openjpa-all:3.1.0',
 
             'org.springframework.boot:spring-boot-starter-web',
             'org.springframework.boot:spring-boot-starter-data-jpa',
@@ -52,7 +56,9 @@ dependencies {
 
 
 
-            'org.apache.openjpa:openjpa-maven-plugin',
+//            'org.apache.openjpa:openjpa-maven-plugin',
+            'org.apache.openjpa:openjpa-maven-plugin:3.1.0',
+
             'javax.ws.rs:jsr311-api',
 
             'com.sun.jersey:jersey-servlet',
